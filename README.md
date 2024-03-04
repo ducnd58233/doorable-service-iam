@@ -37,7 +37,12 @@ Or
 ```
 make start-env
 ```
-2. Start the application
+2. Copy `.env` file from `.env.example`
+```
+cp ./.env.example .env
+```
+
+3. Start the application
 ```
 python manage.py runserver <PORT>
 ```
