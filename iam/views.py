@@ -15,13 +15,22 @@ from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import UserSerializer, EmailVerificationSerializer
+from .serializers import (
+    RegisterSerializer,
+    EmailVerificationSerializer,
+    LoginSerializer,
+)
 from .models import User
 
 
 class VerifyEmail(APIView):
     serializer_class = EmailVerificationSerializer
-    token_param_config = openapi.Parameter("token", in_=openapi.IN_QUERY, description="Access Token from email", type=openapi.TYPE_STRING)
+    token_param_config = openapi.Parameter(
+        "token",
+        in_=openapi.IN_QUERY,
+        description="Access Token from email",
+        type=openapi.TYPE_STRING,
+    )
 
     @swagger_auto_schema(manual_parameters=[token_param_config])
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -52,9 +61,11 @@ class VerifyEmail(APIView):
 
 
 class Register(APIView):
-    serializer_class = UserSerializer
+    serializer_class = RegisterSerializer
 
-    @swagger_auto_schema(operation_description="Create new user", request_body=serializer_class)
+    @swagger_auto_schema(
+        operation_description="Create new user", request_body=serializer_class
+    )
     def post(self, request: HttpRequest) -> HttpResponse:
         serializer = self.serializer_class(data=request.data)
 
@@ -89,3 +100,14 @@ class Register(APIView):
         return Response(
             {"message": "Register successful!"}, status=status.HTTP_201_CREATED
         )
+
+
+class Login(APIView):
+    serializer_class = LoginSerializer
+
+    @swagger_auto_schema(operation_description="Login", request_body=serializer_class)
+    def post(self, request: HttpRequest) -> HttpResponse:
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
