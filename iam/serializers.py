@@ -7,7 +7,12 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = User
-        fields = ["id", "username", "password", "email"]
+        fields = [
+            "id",
+            "email",
+            "username",
+            "password",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data: Dict):
@@ -17,3 +22,11 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
+
+class EmailVerificationSerializer(serializers.ModelSerializer):
+    token = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ["token"]

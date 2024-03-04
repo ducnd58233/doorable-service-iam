@@ -6,18 +6,24 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework import status
-from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, EmailVerificationSerializer
 from .models import User
 
 
 class VerifyEmail(APIView):
+    serializer_class = EmailVerificationSerializer
+    token_param_config = openapi.Parameter("token", in_=openapi.IN_QUERY, description="Access Token from email", type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(manual_parameters=[token_param_config])
     def get(self, request: HttpRequest) -> HttpResponse:
         token = request.GET.get("token")
 
@@ -46,8 +52,11 @@ class VerifyEmail(APIView):
 
 
 class Register(APIView):
+    serializer_class = UserSerializer
+
+    @swagger_auto_schema(operation_description="Create new user", request_body=serializer_class)
     def post(self, request: HttpRequest) -> HttpResponse:
-        serializer = UserSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
             return Response(
