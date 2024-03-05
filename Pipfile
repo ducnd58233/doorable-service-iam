@@ -11,6 +11,7 @@ python-dotenv = "*"
 setuptools = "*"
 drf-yasg = "*"
 faker = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 
