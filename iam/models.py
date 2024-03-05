@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 # Create your models here.
 class User(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True, db_index=True)
+    username = models.EmailField(unique=True, db_index=True)
     is_verified = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
