@@ -10,6 +10,7 @@ djangorestframework-simplejwt = "*"
 python-dotenv = "*"
 setuptools = "*"
 drf-yasg = "*"
+faker = "*"
 
 [dev-packages]
 

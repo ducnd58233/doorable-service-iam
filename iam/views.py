@@ -7,7 +7,6 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.utils.encoding import (
     smart_str,
-    force_str,
     smart_bytes,
     DjangoUnicodeDecodeError,
 )
@@ -122,7 +121,7 @@ class Register(APIView):
         )
 
         return Response(
-            {"message": "Register successful!"}, status=status.HTTP_201_CREATED
+            {"message": "register successful!"}, status=status.HTTP_201_CREATED
         )
 
 
@@ -150,7 +149,7 @@ class RequestPasswordResetEmail(APIView):
         responses={200: serializer_class, 404: "User not found"},
     )
     def post(self, request: HttpRequest) -> HttpResponse:
-        serializer = self.serializer_class(data=request.data)
+        self.serializer_class(data=request.data)
         email = request.data["email"]
 
         users = User.objects.filter(email=email)

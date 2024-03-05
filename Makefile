@@ -16,6 +16,10 @@ run-server:
 start-app:
 	python manage.py startapp $(app_name)
 
+# run test
+start-app:
+	python manage.py test
+
 # migration
 migrate:
 	python manage.py makemigrations
