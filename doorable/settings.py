@@ -30,10 +30,12 @@ JWT_ALGORITHM = "HS256"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:9000"
-]
+
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
+CUSTOM_REDIRECT = [os.environ.get("APP_SCHEME"), "http", "https"]
+
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
 
 
 # Application definition
@@ -165,10 +167,6 @@ SIMPLE_JWT = {
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
-        "Bearer": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
+        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
     }
 }

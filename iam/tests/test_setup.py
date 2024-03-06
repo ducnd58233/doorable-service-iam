@@ -17,14 +17,14 @@ class TestSetUp(APITestCase):
         self.fake = Faker()
 
         self.user_data = {
-            "email": self.fake.email(),
-            "username": self.fake.user_name(),
+            "email": "example@abc.org",
+            "username": "example@abc.org",
             "password": self.fake.password(),
         }
 
         self.saved_user_data = {
-            "email": self.fake.email(),
-            "username": self.fake.user_name(),
+            "email": "example2@gmail.com",
+            "username": "example2@gmail.com",
             "password": self.fake.password(),
         }
 

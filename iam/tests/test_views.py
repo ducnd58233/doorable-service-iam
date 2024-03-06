@@ -109,35 +109,6 @@ class TestRequestPasswordResetEmailViews(TestSetUp):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
 
-class TestPasswordTokenCheck(TestSetUp):
-    def test_user_cannot_confirm_with_invalid_link(self):
-        current_site = "localhost:80"
-        relative_link = reverse(
-            "password-reset-confirm", kwargs={"uidb64": "MZ", "token": "123"}
-        )
-        invalid_link = f"http://{current_site}{relative_link}"
-
-        res = self.client.get(path=invalid_link)
-
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_user_can_confirm_with_valid_link(self):
-        user = User.objects.get(email=self.saved_user_data["email"])
-
-        uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
-        token = PasswordResetTokenGenerator().make_token(user)
-
-        current_site = "localhost:80"
-        relative_link = reverse(
-            "password-reset-confirm", kwargs={"uidb64": uidb64, "token": token}
-        )
-        valid_link = f"http://{current_site}{relative_link}"
-
-        res = self.client.get(path=valid_link)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-
-
 class TestSetNewPassword(TestSetUp):
     def test_user_cannot_reset_password_with_invalid_params(self):
         res = self.client.patch(
@@ -151,9 +122,12 @@ class TestSetNewPassword(TestSetUp):
 
         uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
         token = PasswordResetTokenGenerator().make_token(user)
+        new_password = "new_password"
 
         res = self.client.patch(
             path=self.reset_pw_url,
-            data={"password": "new_password", "token": token, "uidb64": uidb64},
+            data={"password": new_password, "token": token, "uidb64": uidb64},
         )
+        updated_user = User.objects.get(email=self.saved_user_data["email"])
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(updated_user.password, new_password)

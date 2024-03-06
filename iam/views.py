@@ -12,6 +12,7 @@ from django.utils.encoding import (
 )
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.urls import reverse
+from django.shortcuts import redirect
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -31,6 +32,7 @@ from .serializers import (
     LogoutSerializer,
 )
 from .models import User
+from .utils import CustomRedirect, EmailThread
 
 
 class VerifyEmail(APIView):
@@ -87,17 +89,18 @@ class Register(APIView):
     @swagger_auto_schema(
         operation_description="Create new user",
         request_body=serializer_class,
-        # responses={201: serializer_class, 400: "Bad request"},
+        responses={201: serializer_class, 400: "Bad request"},
     )
     def post(self, request: HttpRequest) -> HttpResponse:
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
             return Response(
-                {
-                    "error_message": "email or username already exist!",
-                    "code": status.HTTP_400_BAD_REQUEST,
-                },
+                # {
+                #     "error_message": "email or username already exist!",
+                #     "code": status.HTTP_400_BAD_REQUEST,
+                # },
+                serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST,
                 exception=True,
             )
@@ -114,12 +117,14 @@ class Register(APIView):
             f"Hi {user.username}. Use link below to verify your email \n {absurl}"
         )
 
-        send_mail(
-            subject="Verify your email",
-            message=email_body,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[user.email],
-        )
+        email = {
+            "subject": "Verify your email",
+            "message": email_body,
+            "from_email": settings.EMAIL_HOST_USER,
+            "recipient_list": [user.email],
+        }
+
+        EmailThread(email).start()
 
         return Response(
             {"message": "register successful!"}, status=status.HTTP_201_CREATED
@@ -170,15 +175,17 @@ class RequestPasswordResetEmail(APIView):
             "password-reset-confirm", kwargs={"uidb64": uidb64, "token": token}
         )
 
-        absurl = f"http://{current_site}{relative_link}"
+        redirect_url = request.data.get("redirect_url", "")
+        absurl = f"http://{current_site}{relative_link}?redirect_url={redirect_url}"
         email_body = f"Hello. Use link below to reset your password \n {absurl}"
 
-        send_mail(
-            subject="Reset your password",
-            message=email_body,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[user.email],
-        )
+        email = {
+            "subject": "Reset your password",
+            "message": email_body,
+            "from_email": settings.EMAIL_HOST_USER,
+            "recipient_list": [user.email],
+        }
+        EmailThread(email).start()
         return Response(
             {"message": "link to reset password have been sent"},
             status=status.HTTP_200_OK,
@@ -192,36 +199,27 @@ class PasswordTokenCheck(APIView):
         responses={401: "invalid token"},
     )
     def get(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
+        redirect_url = request.GET.get("redirect_url")
+
         try:
             id = smart_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(id=id)
 
             if not PasswordResetTokenGenerator().check_token(user, token):
-                return Response(
-                    {
-                        "error_message": "invalid token",
-                        "code": status.HTTP_401_UNAUTHORIZED,
-                    },
-                    status=status.HTTP_401_UNAUTHORIZED,
-                    exception=True,
-                )
+                if redirect_url and len(redirect_url) > 3:
+                    return CustomRedirect(f"{redirect_url}?token_valid=False")
+                return CustomRedirect(f"{settings.FRONTEND_URL}?token_valid=False")
 
-            return Response(
-                {
-                    "message": "valid credentials",
-                    "data": {"uidb64": uidb64, "token": token},
-                },
-                status=status.HTTP_200_OK,
-            )
+            if redirect_url and len(redirect_url) > 3:
+                return CustomRedirect(
+                    f"{redirect_url}?token_valid=True&message=valid credentials&uidb64={uidb64}&token={token}"
+                )
+            return CustomRedirect(f"{settings.FRONTEND_URL}?token_valid=True")
+
         except DjangoUnicodeDecodeError:
-            return Response(
-                {
-                    "error_message": "invalid token",
-                    "code": status.HTTP_401_UNAUTHORIZED,
-                },
-                status=status.HTTP_401_UNAUTHORIZED,
-                exception=True,
-            )
+            if redirect_url and len(redirect_url) > 3:
+                return CustomRedirect(f"{redirect_url}?token_valid=False")
+            return CustomRedirect(f"{settings.FRONTEND_URL}?token_valid=False")
 
 
 class SetNewPassword(APIView):
