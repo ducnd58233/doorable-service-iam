@@ -28,6 +28,10 @@ run-redis:
 celery-worker:
 	celery -A ${name} worker --loglevel=info
 
+# running flower: monitoring celery worker
+monitor-worker:
+	celery -A ${name} worker
+
 # migration
 migrate:
 	python manage.py makemigrations
