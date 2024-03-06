@@ -17,8 +17,16 @@ start-app:
 	python manage.py startapp $(app_name)
 
 # run test
-start-app:
+run-test:
 	python manage.py test
+
+# run redis
+run-redis:
+	docker run -d -p 6379:6379 redis
+
+# store celery worker process
+celery-worker:
+	celery -A ${name} worker --loglevel=info
 
 # migration
 migrate:

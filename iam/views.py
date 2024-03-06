@@ -2,7 +2,6 @@ import jwt
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.utils.encoding import (
@@ -12,7 +11,6 @@ from django.utils.encoding import (
 )
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.urls import reverse
-from django.shortcuts import redirect
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -32,7 +30,8 @@ from .serializers import (
     LogoutSerializer,
 )
 from .models import User
-from .utils import CustomRedirect, EmailThread
+from .tasks import send_email
+from .utils import CustomRedirect
 
 
 class VerifyEmail(APIView):
@@ -96,10 +95,6 @@ class Register(APIView):
 
         if not serializer.is_valid():
             return Response(
-                # {
-                #     "error_message": "email or username already exist!",
-                #     "code": status.HTTP_400_BAD_REQUEST,
-                # },
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST,
                 exception=True,
@@ -117,14 +112,14 @@ class Register(APIView):
             f"Hi {user.username}. Use link below to verify your email \n {absurl}"
         )
 
-        email = {
+        message = {
             "subject": "Verify your email",
+            "username": user.username,
             "message": email_body,
-            "from_email": settings.EMAIL_HOST_USER,
             "recipient_list": [user.email],
         }
 
-        EmailThread(email).start()
+        send_email.delay(message)
 
         return Response(
             {"message": "register successful!"}, status=status.HTTP_201_CREATED
@@ -177,15 +172,15 @@ class RequestPasswordResetEmail(APIView):
 
         redirect_url = request.data.get("redirect_url", "")
         absurl = f"http://{current_site}{relative_link}?redirect_url={redirect_url}"
-        email_body = f"Hello. Use link below to reset your password \n {absurl}"
+        email_body = f"Use link below to reset your password \n {absurl}"
 
-        email = {
+        message = {
             "subject": "Reset your password",
             "message": email_body,
-            "from_email": settings.EMAIL_HOST_USER,
             "recipient_list": [user.email],
         }
-        EmailThread(email).start()
+
+        send_email.delay(message)
         return Response(
             {"message": "link to reset password have been sent"},
             status=status.HTTP_200_OK,
@@ -257,17 +252,17 @@ class Logout(APIView):
 
 class UserProfile(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    
+
     def get(self, request: HttpRequest, id: int) -> HttpResponse:
         token = request.auth
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM
         )
         user = User.objects.get(id=payload["user_id"])
-        
+
         if id != user.id:
             return Response(data={})
         return Response(data=user)
-    
+
     def patch(self, request: HttpRequest) -> HttpResponse:
         return Response

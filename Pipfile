@@ -12,6 +12,9 @@ setuptools = "*"
 drf-yasg = "*"
 faker = "*"
 django-cors-headers = "*"
+redis = "*"
+celery = "*"
+django-templated-mail = "*"
 
 [dev-packages]
 

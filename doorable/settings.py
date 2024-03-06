@@ -173,3 +173,5 @@ SWAGGER_SETTINGS = {
         "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
     }
 }
+
+CELERY_BROKER_URL = "redis://localhost:6379/1"
