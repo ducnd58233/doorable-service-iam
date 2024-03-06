@@ -1,0 +1,44 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@2.1.1
+
+jobs:
+  install_deps:
+    executor: python/default
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            pip install pipenv
+            pipenv install
+  run_test:
+    executor: python/default
+    steps:
+      - checkout
+      - run:
+          name: Set environment variables
+          command: |
+            export FRONTEND_URL=$FRONTEND_URL
+            export APP_SCHEME=$APP_SCHEME
+            export SECRET_KEY=$SECRET_KEY
+            export DB_HOST=$DB_HOST
+            export DB_USERNAME=$DB_USERNAME
+            export DB_PASSWORD=$DB_PASSWORD
+            export EMAIL_HOST=$EMAIL_HOST
+            export EMAIL_HOST_USER=$EMAIL_HOST_USER
+            export EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD
+            echo DB_HOST
+      - depends_on: install_deps
+      - run:
+          name: Run tests and migrations
+          command: |
+            pipenv run python manage.py migrate
+            pipenv run python manage.py test
+
+workflows:
+  build-and-test:
+    jobs:
+      - install_deps
+      - run_tests
