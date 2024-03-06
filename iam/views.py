@@ -253,3 +253,21 @@ class Logout(APIView):
         serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserProfile(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    
+    def get(self, request: HttpRequest, id: int) -> HttpResponse:
+        token = request.auth
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM
+        )
+        user = User.objects.get(id=payload["user_id"])
+        
+        if id != user.id:
+            return Response(data={})
+        return Response(data=user)
+    
+    def patch(self, request: HttpRequest) -> HttpResponse:
+        return Response

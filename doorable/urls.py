@@ -30,3 +30,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/auth/", include("iam.urls")),
 ]
+
+handler404 = "utils.views.error_404"
+handler500 = "utils.views.error_500"

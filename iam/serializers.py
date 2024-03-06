@@ -81,7 +81,7 @@ class ResetPasswordEmailRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(min_length=3, max_length=255)
 
     redirect_url = serializers.CharField(min_length=0, max_length=1024, required=False)
-    
+
     class Meta:
         fields = ["email"]
 
@@ -105,7 +105,9 @@ class SetNewPasswordSerializer(serializers.ModelSerializer):
             user = User.objects.get(id=id)
 
             if not PasswordResetTokenGenerator().check_token(user, token):
-                raise AuthenticationFailed("the reset link is invalid", status.HTTP_401_UNAUTHORIZED)
+                raise AuthenticationFailed(
+                    "the reset link is invalid", status.HTTP_401_UNAUTHORIZED
+                )
 
             user.set_password(password)
             user.save()
@@ -118,16 +120,14 @@ class SetNewPasswordSerializer(serializers.ModelSerializer):
 
 class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
-    
-    default_error_messages = {
-        "bad_token": ("token is expired or invalid")
-    }
-    
+
+    default_error_messages = {"bad_token": ("token is expired or invalid")}
+
     def validate(self, attrs: Dict) -> Dict:
         self.token = attrs["refresh_token"]
-        
+
         return attrs
-    
+
     def save(self, **kwargs) -> None:
         try:
             RefreshToken(self.token).blacklist()
