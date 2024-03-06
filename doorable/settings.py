@@ -174,4 +174,31 @@ SWAGGER_SETTINGS = {
     }
 }
 
-CELERY_BROKER_URL = "redis://localhost:6379/1"
+CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://localhost:6379/1")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler"
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "general.log",
+            "formatter": "verbose",
+        }
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console", "file"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO")
+        }
+    },
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] ({levelname}) - {name} - {message}",
+            "style": "{"
+        }
+    }
+}

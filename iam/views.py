@@ -1,4 +1,5 @@
 import jwt
+import logging
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
@@ -32,6 +33,8 @@ from .serializers import (
 from .models import User
 from .tasks import send_email
 from .utils import CustomRedirect
+
+logger = logging.getLogger(__name__)
 
 
 class VerifyEmail(APIView):
@@ -137,7 +140,6 @@ class Login(APIView):
     def post(self, request: HttpRequest) -> HttpResponse:
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
