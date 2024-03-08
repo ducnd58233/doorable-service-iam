@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorable.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorable.django.base")
 
 application = get_wsgi_application()
