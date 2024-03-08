@@ -9,8 +9,11 @@ create-project:
 	django-admin startproject $(project_name) .
 
 # run server
-run-server:
+run-server-dev:
 	python manage.py runserver $(port)
+
+run-server-prod:
+	gunicorn doorable.wsgi
 
 # start app
 start-app:
@@ -22,7 +25,7 @@ run-test:
 
 # run redis
 run-redis:
-	docker run -d -p 6379:6379 redis
+	docker run -p 6379:6379 --name=doorable-redis redis
 
 # store celery worker process
 celery-worker:
@@ -30,7 +33,7 @@ celery-worker:
 
 # running flower: monitoring celery worker
 monitor-worker:
-	celery -A ${name} worker
+	celery -A ${name} flower
 
 # migration
 migrate:
